@@ -1,6 +1,4 @@
-from telnetlib import EL
 import time
-from tkinter import Y
 import pyupbit
 import datetime
 import sys
@@ -88,15 +86,18 @@ def now_stochastic():
 
 def bid_check():
     # 매수조건
-    if (now_stochastic()[0] < 80) and (now_stochastic()[1] < 80) and (now_rsi() > 50) and (now_macdOR() > 0) > 0:
+    if (now_stochastic()[0] < 80) and (now_stochastic()[1] < 80) and (now_rsi() > 50) and (now_macdOR() > 0):
         return True
     else:
         return False
 
 
 def ask_check():
-    if False:  # 매도조건
-
+    cnt = 0
+    cnt += 1 if now_stochastic()[0] > 80 and now_stochastic()[1] > 80 else 0
+    cnt += 1 if now_rsi() <= 50 else 0
+    cnt += 1 if now_macdOR() <= 0 else 0
+    if cnt >= 2:  # 매도조건
         return True
     else:
         return False
