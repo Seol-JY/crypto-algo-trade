@@ -1,3 +1,4 @@
+from operator import rshift
 import time
 import pyupbit
 import sys
@@ -12,7 +13,7 @@ lines = f.readlines()
 access = lines[0].strip()
 secret = lines[1].strip()
 f.close()
-confirm = input("Do you want to run Auto Trading? (y/n): ")
+confirm = input("Run Auto Trading? (y/n): ")
 if confirm == "y":
     upbit = pyupbit.Upbit(access, secret)
     print("Login Sccess!!")
@@ -21,7 +22,6 @@ else:
 logger = subprocess.Popen('python logger.py', creationflags = subprocess.CREATE_NEW_CONSOLE, stdin = subprocess.PIPE)
 print("Autotrading Start...\n")
 # -----------------------------------------------------------------
-
 
 def get_balance(ticker):
     balances = upbit.get_balances()
@@ -67,8 +67,8 @@ def log(_dict):
 
 
 class Indicator:
-    def __init__(self):
-        self.df = pyupbit.get_ohlcv("KRW-BTC", interval="minute10", count=200)
+    def __init__(self,ticker,_interval,_count):
+        self.df = pyupbit.get_ohlcv(ticker, interval=_interval, count=_count)
 
     def now_rsi(self):
         rsi = talib.RSI(np.asarray(self.df['close']), 14)
@@ -83,19 +83,29 @@ class Indicator:
         return [slowk[-1], slowd[-1]]
 
 def bid_check():  #매수조건
-    indicator = Indicator()
+    indicator = Indicator("KRW-BTC", "minute1", 200)
+    stc = indicator.now_stochastic()
+    rs = indicator.now_rsi()
+    maOR = indicator.now_macdOR()
+    logger.stdin.write(f" - stochastic: {stc[0]}, {stc[1]} rsi: {rs} macdOR: {maOR}\n".encode('utf-8'))
+    logger.stdin.flush()
     cnt = True
-    cnt = cnt and (True if indicator.now_stochastic()[0] < 80 and indicator.now_stochastic()[1] < 80 else False)
-    cnt = cnt and (True if indicator.now_rsi() >= 50 else False)
-    cnt = cnt and (True if indicator.now_macdOR() >= 0 else False)
+    cnt = cnt and (True if stc[0] < 80 and stc[1] < 80 else False)
+    cnt = cnt and (True if rs >= 50 else False)
+    cnt = cnt and (True if maOR >= 0 else False)
     return cnt
 
 def ask_check(): # 매도조건
-    indicator = Indicator()
+    indicator = Indicator("KRW-BTC", "minute1", 200)
+    stc = indicator.now_stochastic()
+    rs = indicator.now_rsi()
+    maOR = indicator.now_macdOR()
+    logger.stdin.write(f" - stochastic: {stc[0]}, {stc[1]} rsi: {rs} macdOR: {maOR}\n".encode('utf-8'))
+    logger.stdin.flush()
     cnt = 0
-    cnt += 1 if indicator.now_stochastic()[0] >= 80 and indicator.now_stochastic()[1] >= 80 else 0
-    cnt += 1 if indicator.now_rsi() <= 50 else 0
-    cnt += 1 if indicator.now_macdOR() <= 0 else 0
+    cnt += 1 if stc[0] >= 80 and stc[1] >= 80 else 0
+    cnt += 1 if rs <= 50 else 0
+    cnt += 1 if maOR <= 0 else 0
     if cnt >= 2:
         return True
     else:
@@ -107,7 +117,7 @@ while True:
             if get_balance("KRW") > 5000:
                 if bid_check():
                     log(buy_order("KRW-BTC", get_balance("KRW")*0.9995))
-                    time.sleep(0.5)
+                    time.sleep(1)
                     break
                 time.sleep(0.5)
             else:
@@ -118,8 +128,8 @@ while True:
         while True:
             if get_balance("BTC") > 0.00008:
                 if ask_check():
-                    log(buy_order("KRW-BTC", get_balance("BTC")*0.9995))
-                    time.sleep(0.5)
+                    log(sell_order("KRW-BTC", get_balance("BTC")*0.9995))
+                    time.sleep(1)
                     break
                 time.sleep(0.5)
             else:
