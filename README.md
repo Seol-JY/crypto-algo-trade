@@ -1,5 +1,9 @@
 # Crypto_Algo_Trade
 **Cryptocurrency algorithmic trading**  
+
+![1](https://i.imgur.com/vZZGRhk.png)  
+
+
 Upbit API를 활용  
 Ta-lib 금융 보조지표 라이브러리를 활용한 기술적 분석을 통해  
 매수, 매도시그널 탐색
