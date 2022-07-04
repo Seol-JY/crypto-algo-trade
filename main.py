@@ -7,8 +7,22 @@ import numpy as np
 import subprocess
 import datetime
 
+#--mock_investment--
+class Mock_investment:
+    def __init__(self, budget):
+        self.mock_budget = budget  #KRW
+        self.mock_BTC = 0  #BTC
+    def get_balances(self, ticker):
+        return self.mock_budget
+    def buy_market_order(self):
+        pass
+    def sell_market_order(self):
+        pass
 # ----------------------------------------------------------------
-f = open("access.txt", 'r')
+mock_flag = 0;
+if mock_flag ==1:
+    mock_investment = Mock_investment(10000000)
+f = open("access.txt", 'r', encoding='utf-8')
 lines = f.readlines()
 access = lines[0].strip()
 secret = lines[1].strip()
@@ -23,7 +37,9 @@ logger = subprocess.Popen('python logger.py', creationflags = subprocess.CREATE_
 print("Autotrading Start...\n")
 # -----------------------------------------------------------------
 
-def get_balance(ticker):
+def get_balance(ticker, mock_flag):
+    if (mock_flag==1):
+        return mock_investment.get_balances(ticker);
     balances = upbit.get_balances()
     for b in balances:
         if b['currency'] == ticker:
@@ -34,10 +50,13 @@ def get_balance(ticker):
             else:
                 return 0
 
-def buy_order(ticker, volume):
+def buy_order(ticker, volume, mock_flag):
     try:
         while True:
-            buy_result = upbit.buy_market_order(ticker, volume)
+            if mock_flag ==1:
+                buy_result = mock_investment.buy_market_order()
+            else:
+                buy_result = upbit.buy_market_order(ticker, volume)
             if buy_result == None or 'error' in buy_result:
                 print("매수 재 주문")
                 time.sleep(1)
@@ -47,10 +66,13 @@ def buy_order(ticker, volume):
         print("매수 주문 이상")
 
 
-def sell_order(ticker, volume):
+def sell_order(ticker, volume, mock_flag):
     try:
         while True:
-            sell_result = upbit.sell_market_order(ticker, volume)
+            if mock_flag==1:
+                sell_result = upbit.sell_market_order();
+            else:
+                sell_result = upbit.sell_market_order(ticker, volume)
             if sell_result == None or 'error' in sell_result:
                 print("매도 재 주문")
                 time.sleep(1)
@@ -59,10 +81,11 @@ def sell_order(ticker, volume):
     except:
         print("매도 주문 이상")
 
-
-def log(_dict):
+  
+def log(_dict, mock_flag):
     diction = {"bid": "매수주문", "ask": "매도주문"}
     _created_at = _dict['created_at'][:10] + " " + _dict['created_at'][11:19]
+    print("!!모의거래!!" if (mock_flag==1) else "")
     print(f"[{_created_at}] {_dict['market']} {diction[_dict['side']]} ({_dict['locked']})")
 
 
@@ -114,9 +137,9 @@ def ask_check(): # 매도조건
 while True:
     try:
         while True:
-            if get_balance("KRW") > 5000:
+            if get_balance("KRW", mock_flag) > 5000:
                 if bid_check():
-                    log(buy_order("KRW-BTC", get_balance("KRW")*0.9995))
+                    log(buy_order("KRW-BTC", get_balance("KRW", mock_flag)*0.9995, mock_flag), mock_flag)
                     time.sleep(1)
                     break
                 time.sleep(0.5)
@@ -126,9 +149,9 @@ while True:
             time.sleep(0.5)
 
         while True:
-            if get_balance("BTC") > 0.00008:
+            if get_balance("BTC", mock_flag) > 0.00008:
                 if ask_check():
-                    log(sell_order("KRW-BTC", get_balance("BTC")*0.9995))
+                    log(sell_order("KRW-BTC", get_balance("BTC", mock_flag)*0.9995, mock_flag), mock_flag)
                     time.sleep(1)
                     break
                 time.sleep(0.5)
