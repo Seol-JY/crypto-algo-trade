@@ -1,4 +1,4 @@
-# Crypto_Algo_Trade
+# crypto_algo_trade
 **Cryptocurrency algorithmic trading**  
 
 <img src="https://i.imgur.com/3dzBazY.gif" width="65%" height="65%"></img>
